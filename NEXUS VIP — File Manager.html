@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NEXUS VIP — File Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #080C14;
+    --surface:   #0D1420;
+    --border:    #1A2540;
+    --accent:    #5B8AF0;
+    --accent2:   #9B59F5;
+    --green:     #2ECC8A;
+    --red:       #E55353;
+    --text:      #C8D6F0;
+    --muted:     #4A6080;
+    --white:     #EEF3FF;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Top bar ─────────────────────────────── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .status-badge {
+    background: rgba(46,204,138,0.12);
+    border: 1px solid rgba(46,204,138,0.3);
+    color: var(--green);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Layout ──────────────────────────────── */
+  .layout {
+    display: flex;
+    flex: 1;
+  }
+
+  /* ── Sidebar ─────────────────────────────── */
+  aside {
+    width: 220px;
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+
+  .sidebar-section {
+    margin-bottom: 28px;
+  }
+
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    padding: 0 20px;
+    margin-bottom: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--muted);
+    transition: color 0.15s, background 0.15s;
+    border-left: 2px solid transparent;
+  }
+
+  .nav-item:hover {
+    color: var(--text);
+    background: rgba(91,138,240,0.06);
+  }
+
+  .nav-item.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(91,138,240,0.1);
+  }
+
+  .nav-item .icon {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  /* ── Main ────────────────────────────────── */
+  main {
+    flex: 1;
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .page-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 5px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-ghost {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  /* ── Stats bar ───────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── File grid ───────────────────────────── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(91,138,240,0.1);
+  }
+
+  .search-box {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .search-box input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    width: 160px;
+  }
+
+  .search-box input::placeholder { color: var(--muted); }
+
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .file-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .file-card:hover::before { opacity: 1; }
+
+  .file-type-icon {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .type-apk  { background: rgba(91,138,240,0.15); }
+  .type-zip  { background: rgba(155,89,245,0.15); }
+  .type-so   { background: rgba(46,204,138,0.15); }
+  .type-json { background: rgba(229,83,83,0.15);  }
+  .type-java { background: rgba(255,165,0,0.15);  }
+
+  .file-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .file-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .tag-new    { background: rgba(46,204,138,0.15); color: var(--green); }
+  .tag-stable { background: rgba(91,138,240,0.15); color: var(--accent); }
+  .tag-beta   { background: rgba(155,89,245,0.15); color: var(--accent2); }
+  .tag-apk    { background: rgba(91,138,240,0.12); color: var(--accent); }
+
+  .file-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dl-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: opacity 0.15s;
+  }
+
+  .dl-btn:hover { opacity: 0.85; }
+
+  .dl-btn-ghost {
+    flex: none;
+    width: 36px;
+    background: var(--border);
+    color: var(--muted);
+  }
+
+  /* ── Table view (for keys page) ─────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(91,138,240,0.04); }
+
+  td {
+    padding: 13px 16px;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .key-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .pill-active  { background: rgba(46,204,138,0.15); color: var(--green); }
+  .pill-expired { background: rgba(229,83,83,0.15);  color: var(--red);   }
+  .pill-banned  { background: rgba(74,96,128,0.2);   color: var(--muted); }
+
+  /* ── Upload zone ─────────────────────────── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 28px;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(91,138,240,0.04);
+  }
+
+  .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-title { font-size: 15px; color: var(--white); margin-bottom: 6px; }
+  .upload-sub { font-size: 12px; color: var(--muted); }
+
+  /* ── Responsive ──────────────────────────── */
+  @media (max-width: 768px) {
+    aside { display: none; }
+    main { padding: 20px 16px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .file-grid { grid-template-columns: 1fr; }
+    .search-box { display: none; }
+  }
+
+  /* ── Scrollbar ───────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    NEXUS VIP
+  </div>
+  <div class="header-right">
+    <span class="status-badge">ONLINE</span>
+    <span id="clock" style="font-size:12px;"></span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Sidebar ─────────────────────────────── -->
+  <aside>
+    <div class="sidebar-section">
+      <div class="sidebar-label">MENU</div>
+      <div class="nav-item active" onclick="navigate('files')">
+        <span class="icon">📁</span> Tất cả file
+        <span class="badge" id="badge-files">0</span>
+      </div>
+      <div class="nav-item" onclick="navigate('apk')">
+        <span class="icon">📱</span> APK
+        <span class="badge" id="badge-apk">0</span>
+      </div>
+      <div class="nav-item" onclick="navigate('tools')">
+        <span class="icon">🔧</span> Tools / Source
+      </div>
+      <div class="nav-item" onclick="navigate('keys')">
+        <span class="icon">🔑</span> Key Manager
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">QUẢN LÝ</div>
+      <div class="nav-item" onclick="navigate('upload')">
+        <span class="icon">⬆</span> Upload file
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────── -->
+  <main>
+
+    <!-- ── Page: All Files ─────────────────── -->
+    <div class="page active" id="page-files">
+      <div class="page-header">
+        <div>
+          <div class="page-title">File Manager</div>
+          <div class="page-sub">nexus-vip.github.io</div>
+        </div>
+        <button class="btn btn-primary" onclick="navigate('upload')">⬆ Upload</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Tổng file</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-apk">0</div>
+          <div class="stat-label">APK</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-dl">0</div>
+          <div class="stat-label">Lượt tải</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-size">0 MB</div>
+          <div class="stat-label">Dung lượng</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterFiles('all', this)">Tất cả</button>
+        <button class="filter-btn" onclick="filterFiles('apk', this)">APK</button>
+        <button class="filter-btn" onclick="filterFiles('zip', this)">ZIP</button>
+        <button class="filter-btn" onclick="filterFiles('so', this)">SO</button>
+        <button class="filter-btn" onclick="filterFiles('java', this)">Java/Source</button>
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" placeholder="Tìm file..." oninput="searchFiles(this.value)" id="search-input">
+        </div>
+      </div>
+
+      <div class="file-grid" id="file-grid"></div>
+    </div>
+
+    <!-- ── Page: APK ───────────────────────── -->
+    <div class="page" id="page-apk">
+      <div class="page-header">
+        <div>
+          <div class="page-title">APK</div>
+          <div class="page-sub">Phiên bản mới nhất</div>
+        </div>
+        <button class="btn btn-ghost" onclick="navigate('upload')">⬆ Upload APK mới</button>
+      </div>
+      <div class="file-grid" id="apk-grid"></div>
+    </div>
+
+    <!-- ── Page: Tools ─────────────────────── -->
+    <div class="page" id="page-tools">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Tools / Source</div>
+          <div class="page-sub">File code và công cụ</div>
+        </div>
+      </div>
+      <div class="file-grid" id="tools-grid"></div>
+    </div>
+
+    <!-- ── Page: Keys ──────────────────────── -->
+    <div class="page" id="page-keys">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Key Manager</div>
+          <div class="page-sub">Quản lý Nexus-Vip-V5 keys</div>
+        </div>
+        <button class="btn btn-primary" onclick="addKey()">+ Thêm key</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>KEY</th>
+              <th>TRẠNG THÁI</th>
+              <th>HẾT HẠN</th>
+              <th>THIẾT BỊ</th>
+              <th>GHI CHÚ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="key-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Page: Upload ────────────────────── -->
+    <div class="page" id="page-upload">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Upload file</div>
+          <div class="page-sub">Thêm file vào thư viện</div>
+        </div>
+      </div>
+
+      <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Chọn file hoặc kéo thả vào đây</div>
+        <div class="upload-sub">APK, ZIP, SO, Java, JSON — tối đa 100MB</div>
+        <input type="file" id="file-input" style="display:none" multiple onchange="handleUpload(this)">
+      </div>
+
+      <div id="upload-list"></div>
+
+      <div style="margin-top:24px; padding:18px; background:var(--surface); border:1px solid var(--border); border-radius:8px;">
+        <div style="font-size:13px; color:var(--muted); margin-bottom:12px; font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.05em;">HƯỚNG DẪN GITHUB</div>
+        <div style="font-size:13px; color:var(--text); line-height:1.7;">
+          Để host file trên GitHub và có link tải thực sự:<br>
+          1. Tạo repo GitHub → đặt tên <code style="background:var(--border);padding:2px 6px;border-radius:3px;font-family:'Space Mono',monospace;font-size:11px;">nexus-vip-files</code><br>
+          2. Upload file vào repo<br>
+          3. Link tải: <code style="background:var(--border);padding:2px 6px;border-radius:3px;font-family:'Space Mono',monospace;font-size:11px;">https://github.com/USERNAME/nexus-vip-files/raw/main/TEN_FILE.apk</code><br>
+          4. Paste link đó vào mục "Download URL" khi thêm file bên dưới
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <div style="font-size:14px; font-weight:600; color:var(--white); margin-bottom:14px;">Thêm link file thủ công</div>
+        <div style="display:grid; gap:10px;">
+          <input id="add-name" placeholder="Tên file (vd: NEXUS_GAY_V5.apk)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;">
+          <input id="add-url" placeholder="Download URL (GitHub raw link)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;">
+          <div style="display:flex;gap:10px;">
+            <select id="add-type" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;flex:1;outline:none;">
+              <option value="apk">APK</option>
+              <option value="zip">ZIP</option>
+              <option value="so">SO</option>
+              <option value="java">Java/Source</option>
+              <option value="json">JSON</option>
+            </select>
+            <select id="add-tag" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;flex:1;outline:none;">
+              <option value="new">NEW</option>
+              <option value="stable">STABLE</option>
+              <option value="beta">BETA</option>
+            </select>
+          </div>
+          <input id="add-size" placeholder="Kích thước (vd: 53 MB)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;">
+          <input id="add-note" placeholder="Ghi chú / mô tả" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;color:var(--white);font-family:'Space Grotesk',sans-serif;font-size:13px;outline:none;">
+          <button class="btn btn-primary" onclick="addFile()" style="width:fit-content;">+ Thêm vào thư viện</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────
+const STORAGE_KEY = 'nexus_files';
+const KEYS_KEY    = 'nexus_keys';
+
+function loadFiles() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultFiles(); }
+  catch { return defaultFiles(); }
+}
+
+function saveFiles(files) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+}
+
+function loadKeys() {
+  try { return JSON.parse(localStorage.getItem(KEYS_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveKeys(keys) {
+  localStorage.setItem(KEYS_KEY, JSON.stringify(keys));
+}
+
+// ── Default files (sample) ─────────────────────────────────
+function defaultFiles() {
+  return [
+    {
+      id: 1, name: 'NEXUS_GAY_V5.apk', type: 'apk', tag: 'new',
+      size: '53 MB', url: '#', note: 'Phiên bản mới nhất', downloads: 0,
+      date: '2026-10-10'
+    },
+    {
+      id: 2, name: 'aimdrag_native.zip', type: 'zip', tag: 'stable',
+      size: '14 KB', url: '#', note: 'Native aim drag source', downloads: 0,
+      date: '2026-10-10'
+    },
+    {
+      id: 3, name: 'libaimdrag.so', type: 'so', tag: 'beta',
+      size: '48 KB', url: '#', note: 'arm64-v8a native lib', downloads: 0,
+      date: '2026-10-10'
+    },
+    {
+      id: 4, name: 'KeyValidator.java', type: 'java', tag: 'stable',
+      size: '5 KB', url: '#', note: 'Key system Android client', downloads: 0,
+      date: '2026-10-10'
+    },
+  ];
+}
+
+// ── Type → icon/class ──────────────────────────────────────
+const typeMap = {
+  apk:  { icon: '📱', cls: 'type-apk'  },
+  zip:  { icon: '📦', cls: 'type-zip'  },
+  so:   { icon: '⚙️',  cls: 'type-so'   },
+  java: { icon: '☕', cls: 'type-java' },
+  json: { icon: '📄', cls: 'type-json' },
+};
+
+function getType(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return typeMap[ext] || typeMap['json'];
+}
+
+// ── Render file card ───────────────────────────────────────
+function renderCard(f) {
+  const t = typeMap[f.type] || typeMap['json'];
+  const tagClass = `tag-${f.tag}`;
+  const tagLabel = f.tag.toUpperCase();
+  return `
+    <div class="file-card">
+      <div class="file-type-icon ${t.cls}">${t.icon}</div>
+      <div class="file-name" title="${f.name}">${f.name}</div>
+      <div class="file-meta">${f.size} · ${f.date} · ${f.downloads} lượt tải</div>
+      <div class="file-tags">
+        <span class="tag ${tagClass}">${tagLabel}</span>
+        <span class="tag tag-apk">${f.type.toUpperCase()}</span>
+      </div>
+      ${f.note ? `<div style="font-size:12px;color:var(--muted);margin-bottom:14px;">${f.note}</div>` : ''}
+      <div class="file-actions">
+        <a class="dl-btn" href="${f.url}" download onclick="countDownload(${f.id})">
+          ⬇ Tải xuống
+        </a>
+        <button class="dl-btn dl-btn-ghost" onclick="deleteFile(${f.id})" title="Xoá">🗑</button>
+      </div>
+    </div>`;
+}
+
+// ── Render grids ───────────────────────────────────────────
+let currentFilter = 'all';
+let currentSearch = '';
+
+function renderGrids() {
+  const files = loadFiles();
+  const grid  = document.getElementById('file-grid');
+  const apkG  = document.getElementById('apk-grid');
+  const toolG = document.getElementById('tools-grid');
+
+  let filtered = files.filter(f => {
+    const matchType   = currentFilter === 'all' || f.type === currentFilter;
+    const matchSearch = !currentSearch || f.name.toLowerCase().includes(currentSearch);
+    return matchType && matchSearch;
+  });
+
+  grid.innerHTML  = filtered.map(renderCard).join('') || empty('Không có file nào');
+  apkG.innerHTML  = files.filter(f => f.type === 'apk').map(renderCard).join('') || empty('Chưa có APK');
+  toolG.innerHTML = files.filter(f => f.type !== 'apk').map(renderCard).join('') || empty('Chưa có file');
+
+  // Stats
+  document.getElementById('stat-total').textContent = files.length;
+  document.getElementById('stat-apk').textContent   = files.filter(f => f.type === 'apk').length;
+  document.getElementById('stat-dl').textContent    = files.reduce((a, f) => a + f.downloads, 0);
+  document.getElementById('stat-size').textContent  = files.length + ' file';
+  document.getElementById('badge-files').textContent = files.length;
+  document.getElementById('badge-apk').textContent   = files.filter(f => f.type === 'apk').length;
+}
+
+function empty(msg) {
+  return `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--muted);font-size:13px;">${msg}</div>`;
+}
+
+// ── Filter / search ────────────────────────────────────────
+function filterFiles(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrids();
+}
+
+function searchFiles(val) {
+  currentSearch = val.toLowerCase();
+  renderGrids();
+}
+
+// ── Add file ───────────────────────────────────────────────
+function addFile() {
+  const name = document.getElementById('add-name').value.trim();
+  const url  = document.getElementById('add-url').value.trim();
+  const type = document.getElementById('add-type').value;
+  const tag  = document.getElementById('add-tag').value;
+  const size = document.getElementById('add-size').value.trim() || '?';
+  const note = document.getElementById('add-note').value.trim();
+
+  if (!name || !url) { alert('Nhập tên file và URL'); return; }
+
+  const files = loadFiles();
+  files.unshift({
+    id: Date.now(), name, type, tag, size, url, note,
+    downloads: 0,
+    date: new Date().toISOString().split('T')[0]
+  });
+  saveFiles(files);
+  renderGrids();
+
+  // Clear form
+  ['add-name','add-url','add-size','add-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  alert('✅ Đã thêm: ' + name);
+}
+
+// ── Delete file ────────────────────────────────────────────
+function deleteFile(id) {
+  if (!confirm('Xoá file này?')) return;
+  saveFiles(loadFiles().filter(f => f.id !== id));
+  renderGrids();
+}
+
+// ── Count download ─────────────────────────────────────────
+function countDownload(id) {
+  const files = loadFiles();
+  const f = files.find(x => x.id === id);
+  if (f) { f.downloads++; saveFiles(files); renderGrids(); }
+}
+
+// ── Handle file upload (local preview only) ────────────────
+function handleUpload(input) {
+  const list = document.getElementById('upload-list');
+  list.innerHTML = '';
+  Array.from(input.files).forEach(file => {
+    const div = document.createElement('div');
+    div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;font-size:13px;';
+    div.innerHTML = `<span style="font-size:18px;">📄</span>
+      <div>
+        <div style="color:var(--white);font-weight:500;">${file.name}</div>
+        <div style="color:var(--muted);font-size:11px;font-family:'Space Mono',monospace;">${(file.size/1024/1024).toFixed(2)} MB</div>
+      </div>
+      <span style="margin-left:auto;color:var(--accent);font-size:12px;">Upload lên GitHub thủ công → paste URL</span>`;
+    list.appendChild(div);
+  });
+}
+
+// ── Keys page ──────────────────────────────────────────────
+function renderKeys() {
+  const keys = loadKeys();
+  const tbody = document.getElementById('key-table');
+  if (!keys.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted);">Chưa có key nào</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = keys.map(k => {
+    const expired = k.expiresAt && Date.now() > k.expiresAt;
+    const statusCls = k.banned ? 'pill-banned' : expired ? 'pill-expired' : 'pill-active';
+    const statusTxt = k.banned ? 'Bị khóa' : expired ? 'Hết hạn' : 'Active';
+    const exp = k.expiresAt ? new Date(k.expiresAt).toLocaleDateString('vi') : 'Lifetime';
+    return `<tr>
+      <td><span class="key-text">${k.key}</span></td>
+      <td><span class="pill ${statusCls}">${statusTxt}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:12px;">${exp}</td>
+      <td style="color:var(--muted);font-size:12px;">${k.deviceId || '—'}</td>
+      <td style="color:var(--muted);font-size:12px;">${k.note || ''}</td>
+      <td>
+        <button onclick="deleteKey('${k.key}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;" title="Xoá">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function addKey() {
+  const key = prompt('Nhập key (hoặc để trống để tạo ngẫu nhiên):');
+  const finalKey = key || 'Nexus-Vip-V5-' + Math.random().toString(16).slice(2,10).toUpperCase();
+  const note = prompt('Ghi chú (tên user):') || '';
+  const days = parseInt(prompt('Số ngày (0 = lifetime):') || '30');
+
+  const keys = loadKeys();
+  keys.unshift({
+    key: finalKey,
+    note,
+    expiresAt: days > 0 ? Date.now() + days * 86400000 : null,
+    deviceId: null,
+    banned: false,
+    createdAt: Date.now()
+  });
+  saveKeys(keys);
+  renderKeys();
+}
+
+function deleteKey(key) {
+  if (!confirm('Xoá key ' + key + '?')) return;
+  saveKeys(loadKeys().filter(k => k.key !== key));
+  renderKeys();
+}
+
+// ── Navigation ─────────────────────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  const map = { files: 0, apk: 1, tools: 2, keys: 3, upload: 4 };
+  const items = document.querySelectorAll('.nav-item');
+  if (items[map[page]]) items[map[page]].classList.add('active');
+
+  if (page === 'files' || page === 'apk' || page === 'tools') renderGrids();
+  if (page === 'keys') renderKeys();
+}
+
+// ── Clock ──────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('vi', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Init ───────────────────────────────────────────────────
+renderGrids();
+</script>
+</body>
+</html>
